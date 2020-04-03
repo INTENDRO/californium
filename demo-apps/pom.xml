@@ -33,6 +33,7 @@
 		<module>cf-secure</module>
 		<module>cf-simplefile-server</module>
 		<module>cf-unix-setup</module>
+		<module>coaps_server</module>
 		<module>sc-dtls-example-client</module>
 		<module>sc-dtls-example-server</module>
 	</modules>
