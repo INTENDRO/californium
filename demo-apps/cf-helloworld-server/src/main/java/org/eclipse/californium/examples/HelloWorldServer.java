@@ -29,6 +29,8 @@ import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.elements.tcp.netty.TcpServerConnector;
 import org.eclipse.californium.elements.util.NetworkInterfacesUtil;
 
+import static org.eclipse.californium.core.coap.CoAP.ResponseCode.*;
+
 public class HelloWorldServer extends CoapServer {
 
 	private static final int COAP_PORT = NetworkConfig.getStandard().getInt(NetworkConfig.Keys.COAP_PORT);
@@ -101,6 +103,8 @@ public class HelloWorldServer extends CoapServer {
 	 */
 	class HelloWorldResource extends CoapResource {
 
+		public String value = "to be replaced";
+
 		public HelloWorldResource() {
 
 			// set resource identifier
@@ -114,7 +118,22 @@ public class HelloWorldServer extends CoapServer {
 		public void handleGET(CoapExchange exchange) {
 
 			// respond to the request
-			exchange.respond("Hello World!");
+			exchange.respond(value);
+		}
+
+		@Override
+		public void handlePUT(CoapExchange exchange) {
+			byte[] payload = exchange.getRequestPayload();
+
+			try {
+				value = new String(payload, "UTF-8");
+				System.out.printf("CoAP PUT received. Payload: %s%n", value);
+				exchange.respond(CHANGED, value);
+			} catch (Exception e) {
+				System.out.printf("CoAP PUT received. Payload invalid.%n");
+				e.printStackTrace();
+				exchange.respond(BAD_REQUEST, "Invalid String");
+			}
 		}
 	}
 }
