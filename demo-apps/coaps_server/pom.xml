@@ -17,7 +17,7 @@
 	<description>Californium (Cf) CoAP server using DTLS</description>
 
 	<properties>
-		<assembly.mainClass>org.eclipse.californium.examples.SecureServer</assembly.mainClass>
+		<assembly.mainClass>org.eclipse.californium.examples.SecureServer_seTraining</assembly.mainClass>
 		<skipTests>true</skipTests>
 	</properties>
 
