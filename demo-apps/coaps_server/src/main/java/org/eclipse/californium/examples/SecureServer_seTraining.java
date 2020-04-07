@@ -34,7 +34,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 
-import org.eclipse.californium.core.CaliforniumLogger;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.core.coap.CoAP.ResponseCode;
@@ -44,33 +43,28 @@ import org.eclipse.californium.core.network.config.NetworkConfig;
 import org.eclipse.californium.core.network.interceptors.MessageTracer;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.scandium.DTLSConnector;
-import org.eclipse.californium.scandium.ScandiumLogger;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.cipher.CipherSuite;
 import org.eclipse.californium.scandium.dtls.pskstore.InMemoryPskStore;
+import org.eclipse.californium.scandium.dtls.CertificateType;
 
 
 public class SecureServer_seTraining {
 
-	static {
-		CaliforniumLogger.initialize();
-		CaliforniumLogger.setLevel(Level.CONFIG);
-		ScandiumLogger.initialize();
-		ScandiumLogger.setLevel(Level.FINER);
-	}
-
 	// allows configuration via Californium.properties
 	public static final int DTLS_PORT = NetworkConfig.getStandard().getInt(NetworkConfig.Keys.COAP_SECURE_PORT);
 
-	private static final String TRUST_STORE_PASSWORD = "seTraining19";//"rootPass";
-	private final static String KEY_STORE_PASSWORD = "seTraining19";//"endPass";
-	private static final String KEY_STORE_LOCATION = "certs/seKeyStore.jks"; //"certs/keyStore.jks";
-	private static final String TRUST_STORE_LOCATION = "certs/seKeyStore.jks"; //"certs/trustStore.jks";
-	private static final String SERVER_ADDR = "2001:620:190:cafe::ff05";
+	private static final String TRUST_STORE_PASSWORD = "teamwireless";//"rootPass";
+	private final static String KEY_STORE_PASSWORD = "teamwireless";//"endPass";
+	private static final String KEY_STORE_LOCATION = "alpha_server_keystore.jks"; //"certs/keyStore.jks";
+	private static final String TRUST_STORE_LOCATION = "alpha_server_keystore.jks"; //"certs/trustStore.jks";
+	private static final String SERVER_ADDR = "2a02:168:41ff:0:fc52:8be9:a42c:d07f";
 	
-	private static final String TOGGLE_PATH[] = {"/bin/sh", "/home/sepi/scripts/toggle_led.sh"};
+	// private static final String TOGGLE_PATH[] = {"/bin/sh", "/home/sepi/scripts/toggle_led.sh"};
 	
 	public static void main(String[] args) {
+
+		InetSocketAddress read_addr;
 		
 		CoapServer server = new CoapServer();
 		
@@ -79,13 +73,13 @@ public class SecureServer_seTraining {
 			public void handleGET(CoapExchange exchange) {
 				exchange.respond(ResponseCode.CONTENT, "hello security");
 				
-				try {
-					@SuppressWarnings("unused")
-					Process pr = Runtime.getRuntime().exec(TOGGLE_PATH);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				// try {
+				// 	@SuppressWarnings("unused")
+				// 	Process pr = Runtime.getRuntime().exec(TOGGLE_PATH);
+				// } catch (IOException e) {
+				// 	// TODO Auto-generated catch block
+				// 	e.printStackTrace();
+				// }
 			}
 		});
 		
@@ -106,22 +100,27 @@ public class SecureServer_seTraining {
 			trustStore.load(inTrust, TRUST_STORE_PASSWORD.toCharArray());
 
 			// You can load multiple certificates if needed
-			Certificate[] trustedCertificates = new Certificate[2];
-			trustedCertificates[0] = trustStore.getCertificate("ines_ca"); //"root"
-			trustedCertificates[1] = trustStore.getCertificate("ca_chain"); //"chain of the InES root and the Infineon root"
+			// Certificate[] trustedCertificates = new Certificate[2];
+			// trustedCertificates[0] = trustStore.getCertificate("ines_ca"); //"root"
+			// trustedCertificates[1] = trustStore.getCertificate("ca_chain"); //"chain of the InES root and the Infineon root"
+
+			Certificate[] trustedCertificates = new Certificate[1];
+			trustedCertificates[0] = trustStore.getCertificate("nosd_ca"); //"root"
+
+			System.out.println(trustedCertificates[0].toString());
 
 			// load the key store
 			KeyStore keyStore = KeyStore.getInstance("JKS");
 			InputStream in = SecureServer_seTraining.class.getClassLoader().getResourceAsStream(KEY_STORE_LOCATION);
 			keyStore.load(in, KEY_STORE_PASSWORD.toCharArray()); // KEY_STORE_PASSWORD
 
-			DtlsConnectorConfig.Builder config = new DtlsConnectorConfig.Builder();
+			DtlsConnectorConfig.Builder config = new DtlsConnectorConfig.Builder(); 
+			config.setServerOnly(true);
 			config.setAddress(new InetSocketAddress(SERVER_ADDR, DTLS_PORT));
-			config.setSupportedCipherSuites(new CipherSuite[]{CipherSuite.TLS_PSK_WITH_AES_128_CCM_8,
-					CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8});
+			config.setSupportedCipherSuites(new CipherSuite[]{CipherSuite.TLS_PSK_WITH_AES_128_CCM_8, CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8});
 			config.setPskStore(pskStore);
-			config.setIdentity((PrivateKey)keyStore.getKey("ines_server", KEY_STORE_PASSWORD.toCharArray()),
-					keyStore.getCertificateChain("ines_server"), false); //server instead of "1"
+			config.setIdentity((PrivateKey)keyStore.getKey("nosd_server", KEY_STORE_PASSWORD.toCharArray()),
+					keyStore.getCertificateChain("nosd_server"), (List<CertificateType>)null); 
 			config.setTrustStore(trustedCertificates);
 			
 			config.setRetransmissionTimeout(10000);
@@ -130,7 +129,13 @@ public class SecureServer_seTraining {
 
 			DTLSConnector connector = new DTLSConnector(config.build());
 
-			server.addEndpoint(new CoapEndpoint(connector, NetworkConfig.getStandard()));
+			read_addr = connector.getAddress();
+			System.out.println(read_addr.toString());
+
+			// use CoapEndpoint.Builder to create an endpoint with connector and standard network configuration
+			CoapEndpoint.Builder builder = new CoapEndpoint.Builder();
+			builder.setConnector(connector);
+			server.addEndpoint(builder.build()); 
 			server.start();
 
 		} catch (GeneralSecurityException | IOException e) {
