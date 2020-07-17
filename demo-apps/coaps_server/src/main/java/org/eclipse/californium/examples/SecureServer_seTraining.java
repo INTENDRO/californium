@@ -58,7 +58,8 @@ public class SecureServer_seTraining {
 	private final static String KEY_STORE_PASSWORD = "teamwireless";//"endPass";
 	private static final String KEY_STORE_LOCATION = "alpha_server_keystore.jks"; //"certs/keyStore.jks";
 	private static final String TRUST_STORE_LOCATION = "alpha_server_keystore.jks"; //"certs/trustStore.jks";
-	private static final String SERVER_ADDR = "2a02:168:41ff:0:fc52:8be9:a42c:d07f";
+	// private static final String SERVER_ADDR = "2a02:168:41ff:0:ba27:ebff:fea8:a72f";
+	private static final String SERVER_ADDR = "::1";
 	
 	// private static final String TOGGLE_PATH[] = {"/bin/sh", "/home/sepi/scripts/toggle_led.sh"};
 	
@@ -104,8 +105,9 @@ public class SecureServer_seTraining {
 			// trustedCertificates[0] = trustStore.getCertificate("ines_ca"); //"root"
 			// trustedCertificates[1] = trustStore.getCertificate("ca_chain"); //"chain of the InES root and the Infineon root"
 
-			Certificate[] trustedCertificates = new Certificate[1];
-			trustedCertificates[0] = trustStore.getCertificate("nosd_ca"); //"root"
+			Certificate[] trustedCertificates = new Certificate[2];
+			trustedCertificates[0] = trustStore.getCertificate("nosd_ca"); // root certificate
+			trustedCertificates[1] = trustStore.getCertificate("nosd_server"); // server certificate
 
 			System.out.println(trustedCertificates[0].toString());
 
